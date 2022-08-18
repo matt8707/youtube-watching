@@ -25,9 +25,34 @@ To authenticate with youtube, you need to set a HTTP Cookie File.
 
 [https://github.com/ytdl-org/youtube-dl#how-do-i-pass-cookies-to-youtube-dl](https://github.com/ytdl-org/youtube-dl#how-do-i-pass-cookies-to-youtube-dl)
 
+## Install
+
+Pull and run with docker-compose.
+
+```bash
+cd docker-compose && \
+  docker-compose up -d youtube-watching
+```
+
+```yaml
+version: '3'
+services:
+  youtube-watching:
+    container_name: youtube-watching
+    image: ghcr.io/matt8707/youtube-watching
+    volumes:
+      - /volume1/docker/youtube-watching/config:/config/
+    environment:
+      - COOKIE=/config/youtube.com_cookies.txt
+    network_mode: bridge
+    ports:
+      - 5678:5678
+    restart: always
+```
+
 ## Build
 
-I haven't published any images but you can build the image/container with docker-compose.
+You can also build the image with docker-compose.
 
 ```bash
 cd docker-compose && \
