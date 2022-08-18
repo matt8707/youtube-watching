@@ -101,12 +101,14 @@ rest:
 automation:
   - alias: update_youtube_watching_thumbnail
     id: '1781428593188'
-    mode: restart
+    mode: single
+    max_exceeded: silent
     trigger:
       platform: state
       entity_id:
         - media_player.vardagsrum
         - media_player.sovrum
+      to: playing
     condition:
       or:
         - condition: state
