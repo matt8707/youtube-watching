@@ -41,7 +41,7 @@ services:
     container_name: youtube-watching
     image: ghcr.io/matt8707/youtube-watching
     volumes:
-      - /volume1/docker/youtube-watching/config:/config/
+      - /volume1/docker/youtube-watching/config:/youtube-watching/config/
     environment:
       - COOKIE=./config/youtube.com_cookies.txt
     network_mode: bridge
@@ -68,7 +68,7 @@ services:
       context: /volume1/docker/youtube-watching/
       dockerfile: /volume1/docker/youtube-watching/Dockerfile
     volumes:
-      - /volume1/docker/youtube-watching/config:/config/
+      - /volume1/docker/youtube-watching/config:/youtube-watching/config/
     environment:
       - COOKIE=./config/youtube.com_cookies.txt
     network_mode: bridge
