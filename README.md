@@ -103,24 +103,21 @@ automation:
     id: '1781428593188'
     mode: single
     max_exceeded: silent
+    variables:
+      ytw: >
+        sensor.youtube_watching
     trigger:
       platform: state
       entity_id:
         - media_player.vardagsrum
         - media_player.sovrum
       to: playing
-    condition:
-      or:
-        - condition: state
-          entity_id: media_player.vardagsrum
-          attribute: app_id
-          state: com.google.ios.youtube
-        - condition: state
-          entity_id: media_player.sovrum
-          attribute: app_id
-          state: com.google.ios.youtube
+    condition: >
+      {{ is_state_attr(trigger.entity_id, 'app_id', 'com.google.ios.youtube') and
+      state_attr(trigger.entity_id, 'media_title') != state_attr(ytw, 'title') }}
     action:
-      service: homeassistant.update_entity
-      target:
-        entity_id: sensor.youtube_watching
+      - service: homeassistant.update_entity
+        target:
+          entity_id: >
+            {{ ytw }}
 ```
