@@ -43,7 +43,7 @@ services:
     volumes:
       - /volume1/docker/youtube-watching/config:/config/
     environment:
-      - COOKIE=/config/youtube.com_cookies.txt
+      - COOKIE=./config/youtube.com_cookies.txt
     network_mode: bridge
     ports:
       - 5678:5678
@@ -70,7 +70,7 @@ services:
     volumes:
       - /volume1/docker/youtube-watching/config:/config/
     environment:
-      - COOKIE=/config/youtube.com_cookies.txt
+      - COOKIE=./config/youtube.com_cookies.txt
     network_mode: bridge
     ports:
       - 5678:5678
