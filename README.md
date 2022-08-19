@@ -104,8 +104,7 @@ automation:
     mode: single
     max_exceeded: silent
     variables:
-      ytw: >
-        sensor.youtube_watching
+      ytw: sensor.youtube_watching
     trigger:
       platform: state
       entity_id:
@@ -118,6 +117,5 @@ automation:
     action:
       - service: homeassistant.update_entity
         target:
-          entity_id: >
-            {{ ytw }}
+          entity_id: '{{ ytw }}'
 ```
