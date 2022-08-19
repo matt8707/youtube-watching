@@ -9,7 +9,7 @@ FROM python:3.10-alpine
 
 WORKDIR /youtube-watching
 COPY --from=build /youtube-watching .
-COPY --from=build /usr/local/lib/python3.10/site-packages/ /usr/local/lib/python3.10/site-packages
+COPY --from=build /usr/local/lib/python3.10/site-packages/ /usr/local/lib/python3.10/site-packages/
 EXPOSE 5678
 
 CMD ["python", "./app/main.py"]
