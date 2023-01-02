@@ -1,6 +1,6 @@
 # youtube-watching
 
-A containerized flask app using [yt-dlp](https://github.com/yt-dlp/yt-dlp) to get the latest video from your YouTube watch history. This is as a workaround for YouTube Data API v3 deprecating `watchHistory`.
+A containerized flask app to get the latest video from your YouTube watch history. This is as a workaround for YouTube Data API v3 deprecating "watchHistory".
 
 ```bash
 curl http://127.0.0.1:5678
@@ -22,8 +22,6 @@ curl http://127.0.0.1:5678
 To authenticate with youtube, you need to set a HTTP Cookie File.
 
 > "In order to extract cookies from browser use any conforming browser extension for exporting cookies. For example, [Get cookies.txt](https://chrome.google.com/webstore/detail/get-cookiestxt/bgaddhkoddajcdgocldbbfleckgcbcid/) (for Chrome) or [cookies.txt](https://addons.mozilla.org/en-US/firefox/addon/cookies-txt/) (for Firefox)".
-
-[https://github.com/ytdl-org/youtube-dl#how-do-i-pass-cookies-to-youtube-dl](https://github.com/ytdl-org/youtube-dl#how-do-i-pass-cookies-to-youtube-dl)
 
 ## Install
 

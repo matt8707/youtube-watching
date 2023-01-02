@@ -3,40 +3,88 @@ youtube-watching
 """
 
 import os
+import sys
+from http.cookiejar import MozillaCookieJar
+import json
+import re
+import requests
 from flask import Flask
 from flask_restful import Resource, Api
-import yt_dlp
 
 app = Flask(__name__)
 api = Api(app)
 
 
-def yt_dlp_history(cookie):
+def yt_history(cookie):
     """
-    https://github.com/yt-dlp/yt-dlp#embedding-yt-dlp
+    get latest video from youtube history excluding reel shelf (shorts)
     """
 
-    url = 'https://www.youtube.com/feed/history'
+    # COOKIES
+    cookie_jar = MozillaCookieJar(cookie)
+    try:
+        cookie_jar.load(ignore_discard=True, ignore_expires=True)
+    except OSError as notfound_error:
+        print(f"WARNING: {cookie} not found\nDEBUG: {notfound_error}")
+        sys.exit()
 
-    ydl_opts = {
-        'cookiefile': cookie,
-        'playlist_items': '1',
-        'quiet': 'true',
-        'no_warnings': 'true'
+    # SESSION
+    session = requests.Session()
+    session.headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)\
+            AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-us,en;q=0.5",
+        "Sec-Fetch-Mode": "navigate",
     }
+    session.cookies = cookie_jar
 
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(url, download=False)
+    # RESPONSE
+    response = session.get("https://www.youtube.com/feed/history")
+    cookie_jar.save(ignore_discard=True, ignore_expires=True)
+    html = response.text
 
-    path = ydl.sanitize_info(info)['entries'][0]
+    # JSON
+    try:
+        regex = r"var ytInitialData = (.*);<\/script>"
+        match = re.search(regex, html).group(1)
+        data = json.loads(match)
+        dtabs = data["contents"]["twoColumnBrowseResultsRenderer"]["tabs"][0]["tabRenderer"]["content"]
+        ditems = dtabs["sectionListRenderer"]["contents"][0]["itemSectionRenderer"]["contents"]
+
+    except AttributeError as data_error:
+        print(
+            f"WARNING: Can't find data, update cookie file\nDEBUG: {data_error}")
+        sys.exit()
+
+    # THUMBNAIL
+    def thumbnail(fid):
+        """ return max resolution """
+
+        url = f"https://img.youtube.com/vi/{fid}"
+        maxres = f"{url}/maxresdefault.jpg"
+        default = f"{url}/0.jpg"
+
+        if requests.get(maxres, timeout=3).status_code == 200:
+            return maxres
+
+        return default
+
+    # OUTPUT
+    if "reelShelfRenderer" in ditems[0]:
+        key = ditems[1]["videoRenderer"]
+    else:
+        key = ditems[0]["videoRenderer"]
+
+    video_id = key["videoId"]
 
     return {
-        "channel": path['channel'],
-        "title": path['fulltitle'],
-        "video_id": path['id'],
-        "duration_string": path['duration_string'],
-        "thumbnail": path['thumbnail'],
-        "original_url": path['original_url']
+        "channel": key["longBylineText"]["runs"][0]["text"],
+        "title": key["title"]["runs"][0]["text"],
+        "video_id": video_id,
+        "duration_string": key["lengthText"]["simpleText"],
+        "thumbnail": thumbnail(video_id),
+        "original_url": f"https://www.youtube.com/watch?v={video_id}",
     }
 
 
@@ -47,12 +95,13 @@ class RestApi(Resource):
 
     def get(self):
         """
-        on GET request run yt-dlp
+        on GET request run yt_history
         """
-        return yt_dlp_history(os.environ['COOKIE'])
+        return yt_history(os.environ['COOKIE'])
 
 
 api.add_resource(RestApi, "/")
 
 if __name__ == "__main__":
-    app.run(debug=True, host='0.0.0.0', port=5678)
+    from waitress import serve
+    serve(app, host="0.0.0.0", port=5678)
