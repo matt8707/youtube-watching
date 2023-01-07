@@ -79,6 +79,8 @@ services:
 
 The "YouTube" Apple TV app doesn't expose artwork through AirPlay, so the Home Assistant `apple_tv` integration can't show an `entity_picture`. This is an example to get the thumbnail.
 
+**Note:** It's now possible without this container https://github.com/matt8707/hass-config/commit/ad624e0da9520a2b304f82a57b92c2b6f289a4ad
+
 ```yaml
 rest:
   - resource: http://192.168.1.241:5678
