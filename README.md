@@ -21,7 +21,7 @@ curl http://127.0.0.1:5678
 
 To authenticate with youtube, you need to set a HTTP Cookie File.
 
-> "In order to extract cookies from browser use any conforming browser extension for exporting cookies. For example, [Get cookies.txt](https://chrome.google.com/webstore/detail/get-cookiestxt/bgaddhkoddajcdgocldbbfleckgcbcid/) (for Chrome) or [cookies.txt](https://addons.mozilla.org/en-US/firefox/addon/cookies-txt/) (for Firefox)".
+> "In order to extract cookies from browser use any conforming browser extension for exporting cookies. For example, [Get cookies.txt LOCALLY](https://chrome.google.com/webstore/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc) (for Chrome) or [cookies.txt](https://addons.mozilla.org/en-US/firefox/addon/cookies-txt/) (for Firefox)".
 
 ## Install
 
