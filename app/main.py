@@ -22,8 +22,10 @@ def yt_history(cookie):
 
     # COOKIES
     cookie_jar = MozillaCookieJar(cookie)
+
     try:
         cookie_jar.load(ignore_discard=True, ignore_expires=True)
+
     except OSError as notfound_error:
         print(f"WARNING: {cookie} not found\nDEBUG: {notfound_error}")
         sys.exit()
@@ -49,12 +51,13 @@ def yt_history(cookie):
         regex = r"var ytInitialData = (.*);<\/script>"
         match = re.search(regex, html).group(1)
         data = json.loads(match)
-        dtabs = data["contents"]["twoColumnBrowseResultsRenderer"]["tabs"][0]["tabRenderer"]["content"]
-        ditems = dtabs["sectionListRenderer"]["contents"][0]["itemSectionRenderer"]["contents"]
+
+        path = data["contents"]["twoColumnBrowseResultsRenderer"]\
+            ["tabs"][0]["tabRenderer"]["content"]["sectionListRenderer"]\
+            ["contents"][0]["itemSectionRenderer"]["contents"]
 
     except AttributeError as data_error:
-        print(
-            f"WARNING: Can't find data, update cookie file\nDEBUG: {data_error}")
+        print(f"WARNING: Can't find data, update cookie file\nDEBUG: {data_error}")
         sys.exit()
 
     # THUMBNAIL
@@ -71,20 +74,18 @@ def yt_history(cookie):
         return default
 
     # OUTPUT
-    if "reelShelfRenderer" in ditems[0]:
-        key = ditems[1]["videoRenderer"]
+    if "reelShelfRenderer" in path[0]:
+        key = path[1]["videoRenderer"]
     else:
-        key = ditems[0]["videoRenderer"]
-
-    video_id = key["videoId"]
+        key = path[0]["videoRenderer"]
 
     return {
         "channel": key["longBylineText"]["runs"][0]["text"],
         "title": key["title"]["runs"][0]["text"],
-        "video_id": video_id,
+        "video_id": key["videoId"],
         "duration_string": key["lengthText"]["simpleText"],
-        "thumbnail": thumbnail(video_id),
-        "original_url": f"https://www.youtube.com/watch?v={video_id}",
+        "thumbnail": thumbnail(key["videoId"]),
+        "original_url": f"https://www.youtube.com/watch?v={key['videoId']}",
     }
 
 
