@@ -21,6 +21,13 @@ def yt_history(cookie):
     """
 
     # COOKIES
+    cookie_path = os.environ.get('COOKIE')
+    if not os.path.exists(cookie_path):
+        print(f"ERROR: Cookie file {cookie_path} does not exist")
+        return {
+            "error": f"Cookie file {cookie_path} does not exist"
+        }, 500
+
     cookie_jar = MozillaCookieJar(cookie)
 
     try:
