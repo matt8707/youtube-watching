@@ -3,7 +3,6 @@ youtube-watching
 """
 
 import os
-import sys
 from http.cookiejar import MozillaCookieJar
 import json
 import re
@@ -14,28 +13,21 @@ from flask_restful import Resource, Api
 app = Flask(__name__)
 api = Api(app)
 
-
-def yt_history(cookie):
+def yt_history(cookie_path):
     """
     get latest video from youtube history excluding reel shelf (shorts)
     """
 
     # COOKIES
-    cookie_path = os.environ.get('COOKIE')
     if not os.path.exists(cookie_path):
-        print(f"ERROR: Cookie file {cookie_path} does not exist")
-        return {
-            "error": f"Cookie file {cookie_path} does not exist"
-        }, 500
+        return _error(f"Cookie path '{cookie_path}' does not exist")
 
-    cookie_jar = MozillaCookieJar(cookie)
+    cookie_jar = MozillaCookieJar(cookie_path)
 
     try:
         cookie_jar.load(ignore_discard=True, ignore_expires=True)
-
-    except OSError as notfound_error:
-        print(f"WARNING: {cookie} not found\nDEBUG: {notfound_error}")
-        sys.exit()
+    except Exception as error:
+        return _error(f"Failed to load cookies from '{cookie_path}': {error}")
 
     # SESSION
     session = requests.Session()
@@ -49,51 +41,80 @@ def yt_history(cookie):
     session.cookies = cookie_jar
 
     # RESPONSE
-    response = session.get("https://www.youtube.com/feed/history")
+    try:
+        response = session.get("https://www.youtube.com/feed/history")
+
+    except Exception as error:
+        return _error(f"Error fetching YouTube history: {error}")
+
     cookie_jar.save(ignore_discard=True, ignore_expires=True)
     html = response.text
 
-    # JSON
+    # REGEX
     try:
         regex = r"var ytInitialData = (.*);<\/script>"
         match = re.search(regex, html).group(1)
+
+    except Exception as error:
+        return _error(f"Failed to extract JSON using regex: {error}")
+
+    # JSON
+    try:
         data = json.loads(match)
 
+    except Exception as error:
+        return _error(f"Failed to parse JSON: {error}")
+
+    # DATA
+    try:
         path = data["contents"]["twoColumnBrowseResultsRenderer"]\
             ["tabs"][0]["tabRenderer"]["content"]["sectionListRenderer"]\
             ["contents"][0]["itemSectionRenderer"]["contents"]
 
-    except AttributeError as data_error:
-        print(f"WARNING: Can't find data, update cookie file\nDEBUG: {data_error}")
-        sys.exit()
+    except Exception as error:
+        return _error(f"Failed to extract data: {error}")
 
-    # THUMBNAIL
-    def thumbnail(fid):
-        """ return max resolution """
+    try:
+        if "reelShelfRenderer" in path[0]:
+            key = path[1]["videoRenderer"]
+        else:
+            key = path[0]["videoRenderer"]
 
-        url = f"https://img.youtube.com/vi/{fid}"
-        maxres = f"{url}/maxresdefault.jpg"
-        default = f"{url}/0.jpg"
+        return {
+            "channel": key["longBylineText"]["runs"][0]["text"],
+            "title": key["title"]["runs"][0]["text"],
+            "video_id": key["videoId"],
+            "duration_string": key["lengthText"]["simpleText"],
+            "thumbnail": thumbnail(key["videoId"]),
+            "original_url": f"https://www.youtube.com/watch?v={key['videoId']}",
+        }
 
-        if requests.get(maxres, timeout=3).status_code == 200:
-            return maxres
+    except Exception as error:
+        return _error(f"Failed to extract video details from YouTube data: {error}")
 
-        return default
+def thumbnail(fid):
+    """
+    return max resolution
+    """
 
-    # OUTPUT
-    if "reelShelfRenderer" in path[0]:
-        key = path[1]["videoRenderer"]
-    else:
-        key = path[0]["videoRenderer"]
+    url = f"https://img.youtube.com/vi/{fid}"
+    maxres = f"{url}/maxresdefault.jpg"
+    default = f"{url}/0.jpg"
+
+    if requests.get(maxres, timeout=3).status_code == 200:
+        return maxres
+
+    return default
+
+def _error(error_msg):
+    """
+    Log and return error
+    """
+    print(error_msg)
 
     return {
-        "channel": key["longBylineText"]["runs"][0]["text"],
-        "title": key["title"]["runs"][0]["text"],
-        "video_id": key["videoId"],
-        "duration_string": key["lengthText"]["simpleText"],
-        "thumbnail": thumbnail(key["videoId"]),
-        "original_url": f"https://www.youtube.com/watch?v={key['videoId']}",
-    }
+        "error": error_msg
+    }, 500
 
 
 class RestApi(Resource):
@@ -103,13 +124,27 @@ class RestApi(Resource):
 
     def get(self):
         """
-        on GET request run yt_history
+        on GET request call yt_history
         """
-        return yt_history(os.environ['COOKIE'])
+
+        cookie = os.environ.get('COOKIE')
+
+        if not cookie:
+            return _error("COOKIE environment variable not set")
+
+        try:
+            return yt_history(cookie)
+
+        except Exception as error:
+            return _error(f"Unhandled error occurred: {error}")
 
 
 api.add_resource(RestApi, "/")
 
 if __name__ == "__main__":
-    from waitress import serve
-    serve(app, host="0.0.0.0", port=5678)
+    try:
+        from waitress import serve
+        serve(app, host="0.0.0.0", port=5678)
+
+    except Exception as error:
+        _error(f"Server error: {error}")
