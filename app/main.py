@@ -90,7 +90,7 @@ def yt_history(cookie_path):
         }
 
     except Exception as error:
-        return _error(f"Failed to extract video details from YouTube data: {error}")
+        return _error(f"Failed to extract video details from YouTube data: {error}, {path}")
 
 def thumbnail(fid):
     """
