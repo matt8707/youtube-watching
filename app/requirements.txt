@@ -1,4 +1,4 @@
-Flask==2.3.3
+Flask==3.0.0
 Flask_RESTful==0.3.10
 requests==2.31.0
 waitress==2.1.2
